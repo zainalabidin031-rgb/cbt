@@ -368,9 +368,9 @@
         }
 
         // Mengirim Hasil Ujian Kembali ke Google Sheet (POST)
-       async function submitExamResults() {
+async function submitExamResults() {
     clearInterval(examTimerInterval);
-    showPage('page-dashboard-student'); // Kembalikan ke halaman awal/loading
+    showPage('page-dashboard-student'); 
     
     let detail_jawaban = [];
     examQuestions.forEach(q => {
@@ -394,7 +394,7 @@
     try {
         await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors', // Mode stabil anti-error CORS
+            mode: 'no-cors', // Mode aman bawaan awal
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
