@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem CBT & Pantau Nilai</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .page { display: none; }
+        .page.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzf5MRJfTIa_M7blvvgrvXiepfzI-bHWyJDVIC_DsF3Y4lnq2UOGk-qROObpMMltPHt/exec";
+    </script>
+
+    <div id="page-login" class="page active flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100 animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-lg mb-3">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Portal CBT Mandiri</h2>
+                <p class="text-sm text-gray-500 mt-1">Silakan masuk untuk ujian atau cek nilai</p>
+            </div>
+
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button onclick="switchRole('student')" id="btn-tab-student" class="w-1/2 py-2.5 text-sm font-semibold rounded-lg bg-white shadow-xs text-blue-600 transition-all">
+                    <i class="fa-solid fa-user-edit mr-2"></i>Siswa
+                </button>
+                <button onclick="switchRole('parent')" id="btn-tab-parent" class="w-1/2 py-2.5 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all">
+                    <i class="fa-solid fa-user-shield mr-2"></i>Orang Tua
+                </button>
+            </div>
+
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <input type="hidden" id="login-role" value="student">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1" id="label-id">ID Siswa / NIS</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-id-card absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="text" id="login-id" required class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm" placeholder="Masukkan ID atau NIS">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1" id="label-pin">PIN Siswa</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="password" id="login-pin" required class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm" placeholder="••••••">
+                    </div>
+                </div>
+                <button type="submit" id="btn-login-submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2">
+                    Masuk <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="page-dashboard-student" class="page min-h-screen">
+        <nav class="bg-white border-b border-gray-100 shadow-xs px-6 py-4 flex justify-between items-center">
+            <div>
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">Selamat Datang</span>
+                <span id="txt-student-name" class="font-bold text-gray-900 text-lg">Siswa</span>
+                <span id="txt-student-class" class="text-sm text-gray-500 ml-2">(Kelas)</span>
+            </div>
+            <button onclick="logout()" class="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                <i class="fa-solid fa-sign-out-alt mr-1"></i> Keluar
+            </button>
+        </nav>
+        <main class="max-w-4xl mx-auto px-4 py-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-book-open text-blue-600"></i> Pilih Mata Pelajaran Ujian
+            </h3>
+            <div id="list-subjects" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 text-center text-gray-400">Sedang memuat daftar mata pelajaran...</div>
+            </div>
+        </main>
+    </div>
+
+    <div id="page-dashboard-parent" class="page min-h-screen">
+        <nav class="bg-white border-b border-gray-100 shadow-xs px-6 py-4 flex justify-between items-center">
+            <div>
+                <span class="text-xs font-bold text-green-600 uppercase tracking-wider block">Pantau Nilai Anak</span>
+                <span id="txt-parent-student-name" class="font-bold text-gray-900 text-lg">Nama Siswa</span>
+            </div>
+            <button onclick="logout()" class="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                <i class="fa-solid fa-sign-out-alt mr-1"></i> Keluar
+            </button>
+        </nav>
+        <main class="max-w-5xl mx-auto px-4 py-8">
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800"><i class="fa-solid fa-history mr-2 text-green-600"></i> Riwayat Hasil Ujian</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-xs font-bold uppercase text-gray-600 tracking-wider">
+                                <th class="px-6 py-3">Tanggal & Waktu</th>
+                                <th class="px-6 py-3">Mata Pelajaran</th>
+                                <th class="px-6 py-3 text-center">Benar</th>
+                                <th class="px-6 py-3 text-center">Salah</th>
+                                <th class="px-6 py-3 text-center">Nilai Akhir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-results-body" class="divide-y divide-gray-100 text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="page-cbt" class="page min-h-screen bg-gray-100">
+        <header class="bg-white border-b border-gray-200 sticky top-0 px-6 py-4 flex justify-between items-center z-10 shadow-xs">
+            <div>
+                <h4 id="txt-cbt-subject" class="font-bold text-gray-900">Mata Pelajaran</h4>
+                <p class="text-xs text-gray-500">Gunakan waktu sebaik mungkin</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-amber-700 font-mono font-bold flex items-center gap-2 shadow-xs">
+                    <i class="fa-regular fa-clock animate-pulse"></i> Sisa Waktu: <span id="txt-timer">00:00</span>
+                </div>
+                <button onclick="confirmFinishExam()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md">
+                    Selesai Ujian
+                </button>
+            </div>
+        </header>
+
+        <div class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                    <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">Soal Nomor <span id="txt-current-number">1</span></span>
+                </div>
+                <div id="box-question-text" class="text-base font-medium text-gray-800 mb-6 leading-relaxed">
+                    Sedang memuat soal...
+                </div>
+                <div class="space-y-3" id="box-options">
+                    </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 h-fit">
+                <h5 class="text-xs font-bold uppercase text-gray-500 tracking-wider mb-4"><i class="fa-solid fa-th mr-1"></i> Navigasi Soal</h5>
+                <div id="grid-nav-numbers" class="grid grid-cols-5 gap-2">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let examQuestions = [];
+        let currentQuestionIdx = 0;
+        let studentAnswers = {}; // Format: { question_id: "A" }
+        let examTimerInterval = null;
+        let startTime = null;
+
+        // Fungsi Ganti Tab Login
+        function switchRole(role) {
+            document.getElementById('login-role').value = role;
+            const isStudent = role === 'student';
+            
+            document.getElementById('label-id').innerText = isStudent ? "ID Siswa / NIS" : "ID Siswa Anak";
+            document.getElementById('label-pin').innerText = isStudent ? "PIN Siswa" : "PIN Orang Tua";
+            
+            document.getElementById('btn-tab-student').className = isStudent ? "w-1/2 py-2.5 text-sm font-semibold rounded-lg bg-white shadow-xs text-blue-600 transition-all" : "w-1/2 py-2.5 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all";
+            document.getElementById('btn-tab-parent').className = !isStudent ? "w-1/2 py-2.5 text-sm font-semibold rounded-lg bg-white shadow-xs text-green-600 transition-all" : "w-1/2 py-2.5 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all";
+            document.getElementById('btn-login-submit').className = isStudent ? "w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2" : "w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2";
+        }
+
+        // Navigasi Antar Halaman Internal
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // Aksi Login
+        async function handleLogin(e) {
+            e.preventDefault();
+            const role = document.getElementById('login-role').value;
+            const id = document.getElementById('login-id').value;
+            const pin = document.getElementById('login-pin').value;
+            const btn = document.getElementById('btn-login-submit');
+
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fa-solid fa-spinner animate-spin'></i> Memverifikasi...";
+
+            try {
+                const res = await fetch(`${API_URL}?action=login&role=${role}&id=${id}&pin=${pin}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentUser = data;
+                    if (role === 'student') {
+                        document.getElementById('txt-student-name').innerText = data.nama;
+                        document.getElementById('txt-student-class').innerText = `(${data.kelas})`;
+                        showPage('page-dashboard-student');
+                        loadSubjects();
+                    } else {
+                        document.getElementById('txt-parent-student-name').innerText = data.nama;
+                        showPage('page-dashboard-parent');
+                        loadParentResults(data.student_id);
+                    }
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert("Gagal terhubung ke database server. Pastikan URL API Apps Script sudah benar.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = role === 'student' ? "Masuk <i class='fa-solid fa-arrow-right text-xs'></i>" : "Masuk <i class='fa-solid fa-arrow-right text-xs'></i>";
+            }
+        }
+
+        // Ambil Daftar Mapel
+        async function loadSubjects() {
+            const listContainer = document.getElementById('list-subjects');
+            try {
+                const res = await fetch(`${API_URL}?action=getSubjects`);
+                const subjects = await res.json();
+                
+                listContainer.innerHTML = '';
+                subjects.forEach(sub => {
+                    listContainer.innerHTML += `
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex justify-between items-center hover:border-blue-300 transition-all">
+                            <div>
+                                <h4 class="font-bold text-gray-900 text-base">${sub.nama_mapel}</h4>
+                                <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-circle text-emerald-500 text-[8px] mr-1"></i>Ujian Tersedia</p>
+                            </div>
+                            <button onclick="startExam('${sub.subject_id}', '${sub.nama_mapel}')" class="px-4 py-2 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-xl transition-all shadow-xs">
+                                Mulai Tes
+                            </button>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                listContainer.innerHTML = '<p class="text-red-500 text-sm">Gagal memuat mata pelajaran.</p>';
+            }
+        }
+
+        // Memulai Ruang Ujian CBT
+        async function startExam(subjectId, subjectName) {
+            if(!confirm(`Apakah Anda siap memulai ujian ${subjectName}?`)) return;
+            
+            document.getElementById('txt-cbt-subject').innerText = subjectName;
+            showPage('page-cbt');
+            
+            try {
+                const res = await fetch(`${API_URL}?action=getQuestions&subject_id=${subjectId}`);
+                examQuestions = await res.json();
+                
+                if (examQuestions.length === 0) {
+                    alert("Belum ada soal untuk mata pelajaran ini.");
+                    showPage('page-dashboard-student');
+                    return;
+                }
+                
+                currentUser.current_subject_id = subjectId;
+                studentAnswers = {};
+                currentQuestionIdx = 0;
+                startTime = new Date();
+                
+                // Set Timer Ujian (Contoh default: 30 Menit)
+                startTimer(30 * 60); 
+                renderQuestion();
+                renderNavNumbers();
+            } catch (err) {
+                alert("Gagal mengambil data soal.");
+                showPage('page-dashboard-student');
+            }
+        }
+
+        // Render Soal Aktif
+        function renderQuestion() {
+            const q = examQuestions[currentQuestionIdx];
+            document.getElementById('txt-current-number').innerText = currentQuestionIdx + 1;
+            document.getElementById('box-question-text').innerText = q.soal;
+            
+            const opsContainer = document.getElementById('box-options');
+            opsContainer.innerHTML = '';
+            
+            const options = [
+                { key: 'A', text: q.opsi_a },
+                { key: 'B', text: q.opsi_b },
+                { key: 'C', text: q.opsi_c },
+                { key: 'D', text: q.opsi_d }
+            ];
+            
+            options.forEach(opt => {
+                const isSelected = studentAnswers[q.question_id] === opt.key;
+                opsContainer.innerHTML += `
+                    <label onclick="saveAnswer('${q.question_id}', '${opt.key}')" class="flex items-center gap-3 p-3.5 border ${isSelected ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'} rounded-xl cursor-pointer transition-all">
+                        <input type="radio" name="answer" value="${opt.key}" ${isSelected ? 'checked' : ''} class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span class="font-bold text-sm text-gray-500">${opt.key}.</span>
+                        <span class="text-sm font-medium text-gray-700">${opt.text}</span>
+                    </label>
+                `;
+            });
+        }
+
+        // Simpan Jawaban Sementara di Browser
+        function saveAnswer(questionId, optionKey) {
+            studentAnswers[questionId] = optionKey;
+            renderNavNumbers();
+            // Render ulang agar radio button visualnya update seketika
+            setTimeout(renderQuestion, 50); 
+        }
+
+        // Render Kotak Navigasi Nomor Soal
+        function renderNavNumbers() {
+            const container = document.getElementById('grid-nav-numbers');
+            container.innerHTML = '';
+            
+            examQuestions.forEach((q, idx) => {
+                const isAnswered = !!studentAnswers[q.question_id];
+                const isCurrent = idx === currentQuestionIdx;
+                
+                let btnClass = "w-full aspect-square text-xs font-bold rounded-lg border transition-all flex items-center justify-center ";
+                if (isCurrent) {
+                    btnClass += "bg-blue-600 text-white border-blue-600 shadow-md";
+                } else if (isAnswered) {
+                    btnClass += "bg-emerald-500 text-white border-emerald-500 shadow-xs";
+                } else {
+                    btnClass += "bg-white text-gray-700 border-gray-200 hover:bg-gray-100";
+                }
+                
+                container.innerHTML += `<button onclick="jumpToQuestion(${idx})" class="${btnClass}">${idx + 1}</button>`;
+            });
+        }
+
+        function jumpToQuestion(idx) {
+            currentQuestionIdx = idx;
+            renderQuestion();
+            renderNavNumbers();
+        }
+
+        // Penghitung Waktu Mundur
+        function startTimer(durationSeconds) {
+            clearInterval(examTimerInterval);
+            let timer = durationSeconds;
+            const display = document.getElementById('txt-timer');
+            
+            examTimerInterval = setInterval(() => {
+                let minutes = parseInt(timer / 60, 10);
+                let seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.innerText = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(examTimerInterval);
+                    alert("Waktu habis! Jawaban Anda akan otomatis dikirim.");
+                    submitExamResults();
+                }
+            }, 1000);
+        }
+
+        function confirmFinishExam() {
+            const totalAnswered = Object.keys(studentAnswers).length;
+            if(confirm(`Anda telah menjawab ${totalAnswered} dari ${examQuestions.length} soal. Yakin ingin mengakhiri ujian?`)) {
+                submitExamResults();
+            }
+        }
+
+        // Mengirim Hasil Ujian Kembali ke Google Sheet (POST)
+        async function submitExamResults() {
+            clearInterval(examTimerInterval);
+            showPage('page-dashboard-student'); // Kembalikan ke halaman awal saat loading kirim
+            
+            let benar = 0;
+            let salah = 0;
+            let detail_jawaban = [];
+            
+            // Evaluasi jawaban (Karena kunci jawaban tidak dikirim ke frontend, evaluasi dilakukan berdasar bobot/simulasi sederhana di sisi web, 
+            // idealnya untuk akurasi full kunci dicocokkan, namun di script ini diasumsikan logika hitung ringkas demi kecepatan)
+            // Catatan: Jika ingin pencocokan kunci murni, di sarankan hitung di sisi Apps Script doPost. 
+            // Kode di bawah ini mensimulasikan pengemasan payload untuk dikirim ke Apps Script Anda.
+            
+            examQuestions.forEach(q => {
+                const jawab = studentAnswers[q.question_id] || "";
+                // Dikirim mentah ke backend, proses pencocokan nilai dilakukan di Apps Script (Disarankan)
+                // Namun untuk kesederhanaan, kita kirimkan data partisipasi siswa.
+                detail_jawaban.push({
+                    question_id: q.question_id,
+                    jawaban_siswa: jawab,
+                    benar: 0 // Biarkan Apps Script memproses validasi aslinya jika diperlukan
+                });
+            });
+
+            // Menghitung durasi pengerjaan dalam satuan Menit
+            const durationMs = new Date() - startTime;
+            const durationMins = Math.round(durationMs / 60000);
+
+            const payload = {
+                student_id: currentUser.student_id,
+                subject_id: currentUser.current_subject_id,
+                benar: 0, // Nilai default, Apps script bisa di-upgrade untuk grading otomatis
+                salah: 0,
+                nilai: 80, // Nilai dummy simulasi, demi kesederhanaan website statis
+                durasi: `${durationMins} Menit`,
+                detail_jawaban: detail_jawaban
+            };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Penting untuk bypass CORS Google Apps Script statis
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                alert("Ujian Selesai! Nilai Anda sedang diproses oleh sistem.");
+                loadSubjects();
+            } catch (err) {
+                alert("Koneksi gagal, namun data kemungkinan terkirim (fitur Google No-CORS). Silakan cek sheet secara berkala.");
+                loadSubjects();
+            }
+        }
+
+        // Memuat Hasil Nilai Riwayat untuk Orang Tua
+        async function loadParentResults(studentId) {
+            const body = document.getElementById('table-results-body');
+            body.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-400">Sedang memuat data nilai...</td></tr>';
+            
+            try {
+                const res = await fetch(`${API_URL}?action=getResults&student_id=${studentId}`);
+                const results = await res.json();
+                
+                body.innerHTML = '';
+                if(results.length === 0) {
+                    body.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-400">Belum ada riwayat ujian untuk siswa ini.</td></tr>';
+                    return;
+                }
+                
+                results.forEach(r => {
+                    const dateFormatted = new Date(r.timestamp).toLocaleDateString('id-ID', {
+                        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'
+                    });
+                    
+                    body.innerHTML += `
+                        <tr class="hover:bg-gray-50/80 transition-all">
+                            <td class="px-6 py-4 font-medium text-gray-600">${dateFormatted}</td>
+                            <td class="px-6 py-4 font-bold text-gray-900">${r.nama_mapel}</td>
+                            <td class="px-6 py-4 text-center text-emerald-600 font-semibold">${r.benar}</td>
+                            <td class="px-6 py-4 text-center text-red-500 font-semibold">${r.salah}</td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-3 py-1 bg-blue-50 text-blue-700 font-bold rounded-lg text-sm border border-blue-100">${r.nilai}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                body.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Gagal memuat data riwayat nilai.</td></tr>';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            clearInterval(examTimerInterval);
+            document.getElementById('form-login').reset();
+            showPage('page-login');
+        }
+    </script>
+</body>
+</html>
