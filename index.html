@@ -410,7 +410,7 @@
             const durationMs = new Date() - startTime;
             const durationMins = Math.round(durationMs / 60000);
 
-            const payload = {
+           const payload = {
                 student_id: currentUser.student_id,
                 subject_id: currentUser.current_subject_id,
                 benar: 0, // Nilai default, Apps script bisa di-upgrade untuk grading otomatis
@@ -418,7 +418,7 @@
                 nilai: 80, // Nilai dummy simulasi, demi kesederhanaan website statis
                 durasi: `${durationMins} Menit`,
                 detail_jawaban: detail_jawaban
-            try {
+            };
                 await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors', // Penting untuk bypass CORS Google Apps Script statis
